@@ -1,5 +1,6 @@
 import os
-os.system("pip install exa-py cerebras-cloud-sdk")import streamlit as st
+os.system("pip install exa-py cerebras-cloud-sdk")
+import streamlit as st
 from exa_py import Exa
 from cerebras.cloud.sdk import Cerebras
 
