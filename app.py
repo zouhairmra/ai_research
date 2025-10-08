@@ -1,5 +1,4 @@
-import os
-os.system("pip install exa-py cerebras-cloud-sdk")
+ 
 import streamlit as st
 from duckduckgo_search import DDGS
 from cerebras.cloud.sdk import Cerebras
