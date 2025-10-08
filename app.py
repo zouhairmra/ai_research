@@ -1,7 +1,7 @@
 import os
 os.system("pip install exa-py cerebras-cloud-sdk")
 import streamlit as st
-from exa_py import Exa
+from duckduckgo_search import DDGS
 from cerebras.cloud.sdk import Cerebras
 
 # API keys (store securely in Streamlit Cloud later)
@@ -14,13 +14,15 @@ client = Cerebras(api_key=CEREBRAS_API_KEY)
 
 # Define search function
 def search_web(query, num=5):
-    result = exa.search_and_contents(
-        query,
-        type="auto",
-        num_results=num,
-        text={"max_characters": 1000}
-    )
-    return result.results
+    """Web search using DuckDuckGo (fallback for Exa)"""
+    results = []
+    with DDGS() as ddgs:
+        for r in ddgs.text(query, max_results=num):
+            results.append({
+                "title": r["title"],
+                "content": r["body"]
+            })
+    return results
 
 # Define AI analysis function
 def ask_ai(prompt):
