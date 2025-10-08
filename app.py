@@ -1,5 +1,5 @@
 import streamlit as st
-from exa-py import Exa
+from exa_py import Exa
 from cerebras.cloud.sdk import Cerebras
 
 # API keys (store securely in Streamlit Cloud later)
