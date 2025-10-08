@@ -1,3 +1,6 @@
 streamlit
 duckduckgo-search
+exa-py
 cerebras-cloud-sdk
+requests
+beautifulsoup4
