@@ -1,6 +1,7 @@
 streamlit
-duckduckgo-search
-exa-py
-cerebras-cloud-sdk
-requests
-beautifulsoup4
+pandas
+numpy
+matplotlib
+statsmodels
+scipy
+reportlab
