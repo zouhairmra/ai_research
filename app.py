@@ -1,8 +1,6 @@
 import streamlit as st
 from pathlib import Path
 import importlib
-
-
 st.set_page_config(page_title="EconLab — Interactive Economics Lab", layout='wide')
 
 
