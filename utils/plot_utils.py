@@ -3,9 +3,6 @@ import seaborn as sns
 import streamlit as st
 
 def plot_correlation_matrix(df, figsize=(8,6)):
-    """
-    Display correlation heatmap using seaborn.
-    """
     corr = df.corr()
     fig, ax = plt.subplots(figsize=figsize)
     sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
