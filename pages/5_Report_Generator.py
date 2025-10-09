@@ -1,10 +1,14 @@
+# pages/5_Report_Generator.py
 import streamlit as st
-from utils import report
 
 def show():
-    st.header("Report Generator")
-    title = st.text_input("Report title", "EconLab Report")
-    summary = st.text_area("Summary / Interpretation")
-    if st.button("Generate PDF"):
-        pdf = report.create_pdf(title, summary)
-        st.download_button("Download Report", data=pdf, file_name="econlab_report.pdf", mime="application/pdf")
+    st.title("📄 Report Generator")
+
+    try:
+        from utils import report
+    except ModuleNotFoundError:
+        st.error("⚠️ Missing dependency: `reportlab`. Please install it with `pip install reportlab`.")
+        return
+
+    st.write("Generate your customized economic report here.")
+    st.write("Coming soon: dynamic PDF report creation with charts and summaries.")
