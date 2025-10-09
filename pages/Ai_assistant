@@ -1,1 +1,9 @@
+import streamlit as st
+
+def show():
+    st.header("AI Assistant")
+    st.write("Ask EconLab anything about economics or data analysis (future feature).")
+    question = st.text_input("Your question:")
+    if question:
+        st.write("Response feature coming soon…")
 
