@@ -19,7 +19,6 @@ def show():
         df = pd.DataFrame({"sample_mean": sample_means})
         st.dataframe(df.describe())
 
-       # --- Matplotlib plotting (safe version) ---
 try:
     import matplotlib
     matplotlib.use("Agg", force=True)  # Must come BEFORE pyplot
