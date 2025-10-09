@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def show():
     st.header("Statistics Lab")
@@ -18,5 +18,6 @@ def show():
         df = pd.DataFrame({"sample_mean": sample_means})
         st.write(df.describe())
         fig, ax = plt.subplots()
-        ax.hist(df['sample_mean'], bins=30)
+        ax.hist(df['sample_mean'], bins=30, color='skyblue', edgecolor='black')
+        ax.set_title("Sampling Distribution of the Mean")
         st.pyplot(fig)
