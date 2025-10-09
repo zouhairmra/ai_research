@@ -1,69 +1,43 @@
- 
 import streamlit as st
-from duckduckgo_search import DDGS
-from cerebras.cloud.sdk import Cerebras
+from pathlib import Path
+import importlib
 
-# API keys (store securely in Streamlit Cloud later)
-EXA_API_KEY = st.secrets["EXA_API_KEY"]
-CEREBRAS_API_KEY = st.secrets["CEREBRAS_API_KEY"]
 
-# Initialize clients
-exa = Exa(api_key=EXA_API_KEY)
-client = Cerebras(api_key=CEREBRAS_API_KEY)
+st.set_page_config(page_title="EconLab — Interactive Economics Lab", layout='wide')
 
-# Define search function
-def search_web(query, num=5):
-    """Web search using DuckDuckGo (fallback for Exa)"""
-    results = []
-    with DDGS() as ddgs:
-        for r in ddgs.text(query, max_results=num):
-            results.append({
-                "title": r["title"],
-                "content": r["body"]
-            })
-    return results
 
-# Define AI analysis function
-def ask_ai(prompt):
-    chat_completion = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model="llama-4-scout-17b-16e-instruct",
-        max_tokens=600,
-        temperature=0.2
-    )
-    return chat_completion.choices[0].message.content
+BASE_DIR = Path(__file__).parent
+PAGES = {
+"1. Economic Models": "pages.1_Economic_Models",
+"2. Econometrics Studio": "pages.2_Econometrics_Studio",
+"3. Statistics Lab": "pages.3_Statistics_Lab",
+"4. Data Hub": "pages.4_Data_Hub",
+"5. Report Generator": "pages.5_Report_Generator",
+}
 
-# Define research workflow
-def research_topic(query):
-    results = search_web(query, 5)
-    sources = []
-    for result in results:
-        if result.text and len(result.text) > 200:
-            sources.append({"title": result.title, "content": result.text})
-    if not sources:
-        return "No sources found."
 
-    context = f"Research query: {query}\n\nSources:\n"
-    for i, s in enumerate(sources[:4], 1):
-        context += f"{i}. {s['title']}: {s['content'][:400]}...\n\n"
+# Top navigation
+st.markdown("# EconLab — Where Economic Theory Meets Data")
+st.markdown("***")
 
-    prompt = f"""{context}
-    Based on these sources, provide:
-    SUMMARY: [2-3 sentences]
-    INSIGHTS: - [3 bullet points]
-    """
-    return ask_ai(prompt)
 
-# Streamlit UI
-st.title("🔍 AI Research Assistant")
-st.write("Enter a topic and let AI summarize the latest web knowledge for you.")
+st.sidebar.title("Navigation")
+selection = st.sidebar.radio("Go to", list(PAGES.keys()))
 
-query = st.text_input("Research Topic", "")
-if st.button("Run Research"):
-    if query:
-        with st.spinner("Running research..."):
-            result = research_topic(query)
-        st.success("Research complete!")
-        st.write(result)
-    else:
-        st.warning("Please enter a topic.")
+
+# dynamic import of the selected page module
+module_name = PAGES[selection]
+page = importlib.import_module(module_name)
+
+
+# each page module must implement a `show()` function
+page.show()
+
+
+# Footer
+st.markdown("---")
+col1, col2 = st.columns([3,1])
+with col1:
+st.write("© 2025 EconLab — Built by Mohamed Mrabet")
+with col2:
+st.markdown("[GitHub](https://github.com/your-username) | [Contact](mailto:your-email@example.com)")
