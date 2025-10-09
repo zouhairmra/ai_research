@@ -3,6 +3,4 @@ pandas==2.1.1
 numpy==1.26.5
 matplotlib==3.8.1
 seaborn==0.12.2
-statsmodels==1.2.0 --force-reinstall
-scipy==1.11.2
 reportlab==4.1.3
