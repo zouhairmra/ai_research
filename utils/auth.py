@@ -1,6 +1,5 @@
 import streamlit as st
 
-# Example simple authentication
 USERS = {
     "admin": "password123",
     "student": "econlab2025"
@@ -18,4 +17,3 @@ def login():
             st.sidebar.error("Invalid username or password")
             return False
     return False
-
