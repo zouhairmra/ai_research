@@ -17,3 +17,4 @@ def show():
             X = sm.add_constant(df[x])
             model = sm.OLS(df[y], X).fit()
             st.write(model.summary())
+
