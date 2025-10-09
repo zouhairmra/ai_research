@@ -1,31 +1,25 @@
 import streamlit as st
 import pandas as pd
-import os
-
+from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 
-
-
-
 def show():
-st.header("Data Hub")
-st.write("Browse built-in datasets or upload your own.")
+    st.header("Data Hub")
+    st.write("Browse built-in datasets or upload your own CSV.")
 
+    built_in_files = [f.name for f in DATA_DIR.glob("*.csv")] if DATA_DIR.exists() else []
+    choice = st.selectbox("Select dataset", ["Upload CSV"] + built_in_files)
 
-built_ins = [p.name for p in (DATA_DIR).glob("*.csv")] if DATA_DIR.exists() else []
-choice = st.selectbox("Choose dataset", ["Upload a file"] + built_ins)
-
-
-if choice == "Upload a file":
-uploaded = st.file_uploader("Upload CSV", type=["csv"])
-if uploaded is not None:
-df = pd.read_csv(uploaded)
-st.dataframe(df.head())
-else:
-path = DATA_DIR / choice
-if path.exists():
-df = pd.read_csv(path)
-st.dataframe(df.head())
-else:
-st.info("No built-in datasets found. Add CSVs to the /data folder.")
+    if choice == "Upload CSV":
+        uploaded = st.file_uploader("Upload CSV", type=["csv"])
+        if uploaded:
+            df = pd.read_csv(uploaded)
+            st.dataframe(df.head())
+            st.write(df.describe())
+    else:
+        path = DATA_DIR / choice
+        if path.exists():
+            df = pd.read_csv(path)
+            st.dataframe(df.head())
+            st.write(df.describe())
