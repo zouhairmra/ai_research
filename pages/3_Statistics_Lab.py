@@ -19,25 +19,3 @@ def show():
         df = pd.DataFrame({"sample_mean": sample_means})
         st.dataframe(df.describe())
 
-try:
-    import matplotlib
-    matplotlib.use("Agg", force=True)  # Must come BEFORE pyplot
-    import matplotlib.pyplot as plt
-
-    # Create the figure safely
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.hist(df["sample_mean"], bins=30, color="skyblue", edgecolor="black")
-    ax.set_title("Sampling Distribution of the Mean")
-    ax.set_xlabel("Sample Mean")
-    ax.set_ylabel("Frequency")
-
-    st.pyplot(fig, clear_figure=True)
-    plt.close(fig)
-
-except ModuleNotFoundError:
-    st.error(
-        "⚠️ Matplotlib is not installed in this environment. "
-        "Please ensure `matplotlib` is in requirements.txt, then redeploy the app."
-    )
-except Exception as e:
-    st.error(f"⚠️ Unexpected error during plotting: {str(e)}")
