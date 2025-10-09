@@ -1,5 +1,4 @@
 import streamlit as st
-
 def show():
     st.header("AI Assistant")
     st.write("Ask EconLab anything about economics or data analysis (future feature).")
