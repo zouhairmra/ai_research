@@ -35,7 +35,9 @@ page.show()
 # Footer
 st.markdown("---")
 col1, col2 = st.columns([3,1])
+
 with col1:
-st.write("© 2025 EconLab — Built by Mohamed Mrabet")
+    st.write("© 2025 EconLab — Built by Mohamed Mrabet")
+
 with col2:
-st.markdown("[GitHub](https://github.com/your-username) | [Contact](mailto:your-email@example.com)")
+    st.markdown("[GitHub](https://github.com/your-username) | [Contact](mailto:your-email@example.com)")
