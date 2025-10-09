@@ -3,6 +3,7 @@ import importlib
 
 st.set_page_config(page_title="EconLab — Interactive Economics Lab", layout='wide')
 
+# --- Page mapping ---
 PAGES = {
     "1. Economic Models": "pages.1_Economic_Models",
     "2. Econometrics Studio": "pages.2_Econometrics_Studio",
@@ -12,16 +13,37 @@ PAGES = {
     "6. AI Assistant": "pages.6_AI_Assistant"
 }
 
+# --- Header ---
 st.markdown("# EconLab — Where Economic Theory Meets Data")
 st.markdown("***")
 
+# --- Sidebar navigation ---
 st.sidebar.title("Navigation")
 selection = st.sidebar.radio("Go to", list(PAGES.keys()))
 
 module_name = PAGES[selection]
-page = importlib.import_module(module_name)
-page.show()
 
+try:
+    # Dynamically import the selected module
+    page = importlib.import_module(module_name)
+
+    # Safely call the page
+    if hasattr(page, "show"):
+        page.show()
+    else:
+        # Fallback: run the page if it uses plain Streamlit commands
+        with open(module_name.replace(".", "/") + ".py", "r", encoding="utf-8") as f:
+            code = f.read()
+        exec(code, {"st": st})
+
+except ModuleNotFoundError as e:
+    st.error(f"❌ The module `{module_name}` was not found. Check that the file exists in your repository.")
+    st.exception(e)
+except Exception as e:
+    st.error(f"⚠️ Error while loading page `{selection}`.")
+    st.exception(e)
+
+# --- Footer ---
 st.markdown("---")
 col1, col2 = st.columns([3, 1])
 with col1:
