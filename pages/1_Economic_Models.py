@@ -1,4 +1,5 @@
 import streamlit as st
+
 def show():
     st.header("Economic Models Playground")
     st.write("Interactive simulations of classic economic models.")
