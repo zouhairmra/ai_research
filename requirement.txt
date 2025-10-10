@@ -8,4 +8,4 @@ seaborn
 plotly
 scikit-learn
 reportlab
-llama-cpp-python
+llama-cpp-python==0.2.90
