@@ -1,5 +1,5 @@
 streamlit==1.25.0
-openai>=1.3.0
+requests
 pandas==2.1.1
 numpy==1.26.5
 matplotlib==3.7.2
@@ -8,4 +8,4 @@ seaborn
 plotly
 scikit-learn
 reportlab
-llama-cpp-python==0.2.90
+ 
