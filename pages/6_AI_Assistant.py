@@ -13,7 +13,10 @@ except ModuleNotFoundError:
     from openai import OpenAI
 
 # --- Prompt input ---
-prompt = st.text_area("💬 Your question:", placeholder="e.g. Explain the relationship between inflation and interest rates...")
+prompt = st.text_area(
+    "💬 Your question:",
+    placeholder="e.g. Explain the relationship between inflation and interest rates..."
+)
 
 # --- Response section ---
 if st.button("Generate Answer"):
@@ -21,8 +24,6 @@ if st.button("Generate Answer"):
         st.warning("Please enter a question first.")
     else:
         with st.spinner("Thinking..."):
-
-            # ===== LOCAL LLaMA PATH =====
             model_path = "models/Llama-2-13B_Q4_K_M.gguf"
 
             if LOCAL_LLAMA and os.path.exists(model_path):
@@ -35,14 +36,12 @@ if st.button("Generate Answer"):
                     verbose=False
                 )
                 response = llm.create_completion(
-                    prompt=f"Answer the following economics question clearly and concisely:\n{prompt}\nAnswer:",
+                    prompt=f"Answer this economics question clearly and concisely:\n{prompt}\nAnswer:",
                     max_tokens=400,
                     temperature=0.6,
                 )
                 answer = response["choices"][0]["text"].strip()
-
             else:
-                # ===== FALLBACK: GPT via API =====
                 st.warning("Using cloud GPT model (local model not available).")
                 client = OpenAI()
                 response = client.chat.completions.create(
@@ -51,4 +50,9 @@ if st.button("Generate Answer"):
                         {"role": "system", "content": "You are an expert in economics and data analysis."},
                         {"role": "user", "content": prompt}
                     ],
-                    tempe
+                    temperature=0.6
+                )
+                answer = response.choices[0].message.content.strip()
+
+        st.markdown("### 🧩 AI Response:")
+        st.success(answer)
