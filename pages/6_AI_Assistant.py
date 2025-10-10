@@ -1,41 +1,74 @@
 import streamlit as st
-from llama_cpp import Llama
+import requests
+import json
 
-st.set_page_config(page_title="EconLab — Local AI Assistant", layout="centered")
+# -------------------------------
+# ✅ Page setup
+# -------------------------------
+st.set_page_config(page_title="AI Assistant", page_icon="🤖")
+st.title("🤖 Local AI Assistant (Ollama)")
+st.write("Chat with a local or remote model powered by Ollama!")
 
-st.title("🤖 EconLab — Local AI Assistant")
-st.caption("Ask your local AI model (Llama-2-13B_Q4_K_M.gguf) about economics or data analysis.")
+# -------------------------------
+# ⚙️ Ollama settings
+# -------------------------------
+OLLAMA_API_URL = st.secrets.get("OLLAMA_API_URL", "http://localhost:11434/api/chat")
 
-# Path to your local model
-MODEL_PATH = "./models/Llama-2-13B_Q4_K_M.gguf"
+# Model options
+model = st.selectbox("Select model", ["llama3.2", "phi3", "mistral", "gemma2"])
 
-# Load model (only once)
-@st.cache_resource
-def load_model():
-    return Llama(
-        model_path=MODEL_PATH,
-        n_ctx=4096,
-        n_threads=8,  # adjust based on your CPU
-        n_gpu_layers=35  # 0 = CPU only, increase if you have GPU
-    )
+# -------------------------------
+# 💬 Chat interface
+# -------------------------------
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
 
-llm = load_model()
+for msg in st.session_state["messages"]:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# Chat interface
-st.subheader("💬 Chat with your local model")
+user_input = st.chat_input("Ask me anything about your research or data...")
 
-user_input = st.text_area("Your question:", placeholder="e.g., Explain inflation in simple economic terms")
+if user_input:
+    # Save user message
+    st.session_state["messages"].append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
 
-if st.button("Generate Answer"):
-    if user_input.strip():
-        with st.spinner("Thinking..."):
-            output = llm.create_completion(
-                prompt=f"The following is a question about economics or data analysis:\n\n{user_input}\n\nAnswer clearly and concisely:",
-                max_tokens=512,
-                temperature=0.7,
-                top_p=0.9
+    # Send to Ollama API
+    with st.chat_message("assistant"):
+        placeholder = st.empty()
+        full_response = ""
+
+        try:
+            response = requests.post(
+                OLLAMA_API_URL,
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": user_input}],
+                    "stream": True
+                },
+                stream=True,
             )
-            response = output["choices"][0]["text"].strip()
-            st.markdown(f"### 🧠 Answer:\n{response}")
-    else:
-        st.warning("Please enter a question first.")
+
+            for line in response.iter_lines():
+                if line:
+                    data = json.loads(line)
+                    token = data.get("message", {}).get("content", "")
+                    full_response += token
+                    placeholder.markdown(full_response + "▌")
+            placeholder.markdown(full_response)
+
+        except Exception as e:
+            st.error(f"❌ Error connecting to Ollama: {e}")
+            full_response = "Error: could not connect to Ollama."
+
+    # Save assistant response
+    st.session_state["messages"].append({"role": "assistant", "content": full_response})
+
+# -------------------------------
+# 🧹 Reset chat
+# -------------------------------
+if st.button("Clear chat"):
+    st.session_state["messages"] = []
+    st.experimental_rerun()
