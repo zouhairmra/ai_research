@@ -1,32 +1,54 @@
-# pages/6_AI_Assistant.py
 import streamlit as st
-from llama_cpp import Llama
+import os
 
-def show():
-    st.title("🤖 EconLab AI Assistant (Local LLaMA 2)")
+st.title("🤖 AI Economics Assistant")
+st.write("Ask EconLab anything about economics or data analysis — powered by a local or cloud AI model.")
 
-    st.write("Ask anything about economics, econometrics, statistics, or data analysis!")
+# --- Try to import local model first ---
+try:
+    from llama_cpp import Llama
+    LOCAL_LLAMA = True
+except ModuleNotFoundError:
+    LOCAL_LLAMA = False
+    from openai import OpenAI
 
-    question = st.text_input("Your question:")
+# --- Prompt input ---
+prompt = st.text_area("💬 Your question:", placeholder="e.g. Explain the relationship between inflation and interest rates...")
 
-    if question:
-        st.info("💡 Generating answer… please wait.")
+# --- Response section ---
+if st.button("Generate Answer"):
+    if not prompt.strip():
+        st.warning("Please enter a question first.")
+    else:
+        with st.spinner("Thinking..."):
 
-        try:
-            # Initialize LLaMA model (make sure the path points to your .gguf file)
-            llm = Llama(model_path="models/Llama-2-13B_Q4_K_M.gguf")
+            # ===== LOCAL LLaMA PATH =====
+            model_path = "models/Llama-2-13B_Q4_K_M.gguf"
 
-            # Generate response
-            response = llm(
-                question,
-                max_tokens=512,
-                stop=None,
-                temperature=0.2
-            )
+            if LOCAL_LLAMA and os.path.exists(model_path):
+                st.info("Using local model: Llama-2-13B_Q4_K_M.gguf")
+                llm = Llama(
+                    model_path=model_path,
+                    n_ctx=4096,
+                    n_threads=6,
+                    n_gpu_layers=20,
+                    verbose=False
+                )
+                response = llm.create_completion(
+                    prompt=f"Answer the following economics question clearly and concisely:\n{prompt}\nAnswer:",
+                    max_tokens=400,
+                    temperature=0.6,
+                )
+                answer = response["choices"][0]["text"].strip()
 
-            st.success("✅ Answer:")
-            st.write(response['choices'][0]['text'])
-
-        except Exception as e:
-            st.error(f"⚠️ Error generating answer: {e}")
-            st.write("Please check that your .gguf model exists and is compatible.")
+            else:
+                # ===== FALLBACK: GPT via API =====
+                st.warning("Using cloud GPT model (local model not available).")
+                client = OpenAI()
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an expert in economics and data analysis."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    tempe
