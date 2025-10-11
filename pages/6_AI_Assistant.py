@@ -1,33 +1,33 @@
 import streamlit as st
 from openai import OpenAI
-import os
 
-# -------------------------------
-# PAGE CONFIGURATION
-# -------------------------------
+# ==============================
+# Streamlit Page Config
+# ==============================
 st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="centered")
-st.title("🤖 EconLab — AI Assistant (Poe Model)")
-st.write("Ask **Maztouriabot** anything about economics or data analysis — powered by Poe API.")
+st.title("🤖 EconLab — AI Assistant (Poe API)")
+st.write("Ask your Poe-hosted AI (e.g., maztouriabot) anything about economics or data analysis.")
 
-# -------------------------------
-# API SETUP
-# -------------------------------
-POE_API_KEY = st.secrets.get("POE_API_KEY") or os.getenv("POE_API_KEY")
-
-if not POE_API_KEY:
-    st.error("❌ Missing Poe API key. Please add it in Streamlit secrets as `POE_API_KEY = 'your_key_here'`.")
+# ==============================
+# Poe API Setup
+# ==============================
+try:
+    client = OpenAI(
+        api_key=st.secrets["POE_API_KEY"],   # Add this to Streamlit secrets
+        base_url="https://api.poe.com/v1"
+    )
+except Exception as e:
+    st.error(f"⚠️ Poe API client initialization failed: {e}")
     st.stop()
 
-client = OpenAI(
-    api_key=POE_API_KEY,
-    base_url="https://api.poe.com/v1"
-)
+# ==============================
+# Select Model
+# ==============================
+model = st.selectbox("Select your Poe model", ["maztouriabot", "claude-instant", "gpt-4o-mini"])
 
-MODEL = "maztouriabot"
-
-# -------------------------------
-# CHAT HISTORY
-# -------------------------------
+# ==============================
+# Chat History
+# ==============================
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
@@ -36,42 +36,36 @@ for msg in st.session_state["messages"]:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# -------------------------------
-# USER INPUT
-# -------------------------------
-user_input = st.chat_input("Ask Maztouriabot anything about economics or data analysis:")
+# ==============================
+# Chat Input
+# ==============================
+user_input = st.chat_input("Ask me anything about economics or data analysis:")
 
 if user_input:
-    # Save user message
+    # Store user message
     st.session_state["messages"].append({"role": "user", "content": user_input})
 
-    # Display user message
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # Assistant reply
+    # Display assistant reply
     with st.chat_message("assistant"):
         placeholder = st.empty()
-        placeholder.markdown("⌛ Thinking...")
+        full_response = ""
 
         try:
-            chat = client.chat.completions.create(
-                model=MODEL,
-                messages=[{"role": "user", "content": user_input}],
+            response = client.chat.completions.create(
+                model=model,
+                messages=st.session_state["messages"]
             )
-            response = chat.choices[0].message.content
-            placeholder.markdown(response)
+            full_response = response.choices[0].message.content
+            placeholder.markdown(full_response)
 
         except Exception as e:
-            st.error(f"❌ API request failed: {e}")
-            response = "Error connecting to Poe API."
+            st.error(f"❌ Error communicating with Poe API: {e}")
+            full_response = f"Error: {e}"
 
     # Save assistant response
-    st.session_state["messages"].append({"role": "assistant", "content": response})
+    st.session_state["messages"].append({"role": "assistant", "content": full_response})
 
-# -------------------------------
-# CLEAR CHAT
-# -------------------------------
-if st.button("Clear chat"):
-    st.session_state["messages"] = []
-    st.toast("Chat cleared. You can start again!")
+# =========
