@@ -68,4 +68,9 @@ if user_input:
     # Save assistant response
     st.session_state["messages"].append({"role": "assistant", "content": full_response})
 
-# =========
+# ==============================
+# Clear Chat Button
+# ==============================
+if st.button("Clear chat"):
+    st.session_state["messages"] = []
+    st.toast("Chat cleared. You can start again!")
