@@ -1,58 +1,64 @@
 import streamlit as st
-from openai import OpenAI
 
-# ==============================
-# Streamlit Page Config
-# ==============================
+# -------------------------------
+# Page configuration
+# -------------------------------
 st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="centered")
-st.title("🤖 EconLab — AI Assistant (Poe API)")
-st.write("Ask your Poe-hosted AI (e.g., maztouriabot) anything about economics or data analysis.")
+st.title("🤖 EconLab — AI Assistant (Poe)")
+st.write("Ask your Poe-hosted AI anything about economics or data analysis.")
 
-# ==============================
-# Poe API Setup
-# ==============================
+# -------------------------------
+# Try importing OpenAI client
+# -------------------------------
+try:
+    from openai import OpenAI
+except ModuleNotFoundError:
+    st.error("⚠️ Missing library: `openai`. Please add `openai` to requirements.txt and redeploy.")
+    st.stop()
+
+# -------------------------------
+# Initialize Poe client
+# -------------------------------
 try:
     client = OpenAI(
-        api_key=st.secrets["POE_API_KEY"],   # Add this to Streamlit secrets
+        api_key=st.secrets["POE_API_KEY"],  # Add this to Streamlit Secrets
         base_url="https://api.poe.com/v1"
     )
 except Exception as e:
-    st.error(f"⚠️ Poe API client initialization failed: {e}")
+    st.error(f"⚠️ Failed to initialize Poe client: {e}")
     st.stop()
 
-# ==============================
-# Select Model
-# ==============================
-model = st.selectbox("Select your Poe model", ["maztouriabot", "claude-instant", "gpt-4o-mini"])
+# -------------------------------
+# Model selection
+# -------------------------------
+model = st.selectbox("Select Poe model", ["maztouriabot", "claude-instant", "gpt-4o-mini"])
 
-# ==============================
-# Chat History
-# ==============================
+# -------------------------------
+# Chat history in session
+# -------------------------------
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-# Display chat history
+# Display previous chat
 for msg in st.session_state["messages"]:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ==============================
-# Chat Input
-# ==============================
+# -------------------------------
+# Chat input
+# -------------------------------
 user_input = st.chat_input("Ask me anything about economics or data analysis:")
 
 if user_input:
-    # Store user message
+    # Save user message
     st.session_state["messages"].append({"role": "user", "content": user_input})
-
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # Display assistant reply
+    # Assistant response
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_response = ""
-
         try:
             response = client.chat.completions.create(
                 model=model,
@@ -68,9 +74,9 @@ if user_input:
     # Save assistant response
     st.session_state["messages"].append({"role": "assistant", "content": full_response})
 
-# ==============================
-# Clear Chat Button
-# ==============================
+# -------------------------------
+# Clear chat button
+# -------------------------------
 if st.button("Clear chat"):
     st.session_state["messages"] = []
     st.toast("Chat cleared. You can start again!")
