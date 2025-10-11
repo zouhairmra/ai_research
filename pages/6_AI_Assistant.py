@@ -9,7 +9,7 @@ st.write("Ask your remote Ollama model anything about economics or data analysis
 # -------------------------------
 # Remote Ollama API URL
 # -------------------------------
-OLLAMA_API_URL = st.secrets.get("OLLAMA_API_URL", "http://86.36.65.70:11434/api/chat")
+OLLAMA_API = "http://localhost:11434/api/chat"
 
 # Select model
 model = st.selectbox("Select model", ["llama3.2", "phi3", "mistral", "gemma2"])
