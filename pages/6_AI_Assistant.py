@@ -1,30 +1,32 @@
-# pages/6_AI_Assistant.py
 import streamlit as st
-import requests
-import json
+from openai import OpenAI
+import os
 
 # -------------------------------
-# Page setup
+# PAGE CONFIGURATION
 # -------------------------------
 st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="centered")
-st.title("🤖 EconLab — AI Assistant")
-st.write("Ask your Ollama model anything about economics or data analysis.")
+st.title("🤖 EconLab — AI Assistant (Poe Model)")
+st.write("Ask **Maztouriabot** anything about economics or data analysis — powered by Poe API.")
 
 # -------------------------------
-# Remote Ollama API URL
+# API SETUP
 # -------------------------------
-# Use your public ngrok / Cloudflare / IP tunnel if hosted remotely.
-# Example: "https://longname.ngrok.io/api/chat"
-# When testing locally, keep: "http://localhost:11434/api/chat"
-OLLAMA_API_URL = st.secrets.get("OLLAMA_API_URL", "http://localhost:11434/api/chat")
+POE_API_KEY = st.secrets.get("POE_API_KEY") or os.getenv("POE_API_KEY")
+
+if not POE_API_KEY:
+    st.error("❌ Missing Poe API key. Please add it in Streamlit secrets as `POE_API_KEY = 'your_key_here'`.")
+    st.stop()
+
+client = OpenAI(
+    api_key=POE_API_KEY,
+    base_url="https://api.poe.com/v1"
+)
+
+MODEL = "maztouriabot"
 
 # -------------------------------
-# Model selection
-# -------------------------------
-model = st.selectbox("Select model", ["llama3.2", "phi3", "mistral", "gemma2"])
-
-# -------------------------------
-# Initialize chat history
+# CHAT HISTORY
 # -------------------------------
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
@@ -35,62 +37,41 @@ for msg in st.session_state["messages"]:
         st.markdown(msg["content"])
 
 # -------------------------------
-# User input
+# USER INPUT
 # -------------------------------
-user_input = st.chat_input("Ask me anything about economics or data analysis:")
+user_input = st.chat_input("Ask Maztouriabot anything about economics or data analysis:")
 
 if user_input:
-    # Display and store user message
+    # Save user message
     st.session_state["messages"].append({"role": "user", "content": user_input})
+
+    # Display user message
     with st.chat_message("user"):
         st.markdown(user_input)
 
+    # Assistant reply
     with st.chat_message("assistant"):
         placeholder = st.empty()
-        full_response = ""
+        placeholder.markdown("⌛ Thinking...")
 
         try:
-            # Send user query to Ollama API (streaming)
-            response = requests.post(
-                OLLAMA_API_URL,
-                json={
-                    "model": model,
-                    "messages": [{"role": "user", "content": user_input}],
-                    "stream": True
-                },
-                stream=True,
-                timeout=120
+            chat = client.chat.completions.create(
+                model=MODEL,
+                messages=[{"role": "user", "content": user_input}],
             )
-
-            # Stream and display each chunk
-            for line in response.iter_lines():
-                if not line:
-                    continue
-                try:
-                    data = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-
-                # Extract text content from Ollama response
-                token = data.get("message", {}).get("content", "")
-                full_response += token
-                placeholder.markdown(full_response + "▌")
-
-                if data.get("done"):
-                    break
-
-            placeholder.markdown(full_response)
+            response = chat.choices[0].message.content
+            placeholder.markdown(response)
 
         except Exception as e:
-            st.error(f"❌ Error connecting to Ollama: {e}")
-            full_response = f"Error: could not connect to Ollama ({e})"
+            st.error(f"❌ API request failed: {e}")
+            response = "Error connecting to Poe API."
 
-    # Save assistant message
-    st.session_state["messages"].append({"role": "assistant", "content": full_response})
+    # Save assistant response
+    st.session_state["messages"].append({"role": "assistant", "content": response})
 
 # -------------------------------
-# Clear chat
+# CLEAR CHAT
 # -------------------------------
-if st.button("🧹 Clear chat"):
+if st.button("Clear chat"):
     st.session_state["messages"] = []
-    st.toast("Chat cleared — start again!")
+    st.toast("Chat cleared. You can start again!")
