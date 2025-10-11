@@ -7,44 +7,40 @@ st.title("🤖 EconLab — AI Assistant")
 st.write("Ask your remote Ollama model anything about economics or data analysis.")
 
 # -------------------------------
-# Remote Ollama API URL (from secrets)
+# Remote Ollama API URL
 # -------------------------------
 OLLAMA_API_URL = st.secrets.get("OLLAMA_API_URL", "http://86.36.65.70:11434/api/chat")
 
-# Select model if your server has multiple models
+# Select model
 model = st.selectbox("Select model", ["llama3.2", "phi3", "mistral", "gemma2"])
 
 # -------------------------------
-# Initialize session messages
+# Initialize chat history
 # -------------------------------
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-# Display previous chat
+# Display chat history
 for msg in st.session_state["messages"]:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
 # -------------------------------
-# User input
+# Chat input
 # -------------------------------
 user_input = st.chat_input("Ask me anything about economics or data analysis:")
 
 if user_input:
-    # Save user message
     st.session_state["messages"].append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # -------------------------------
-    # Send to Ollama API
-    # -------------------------------
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_response = ""
 
         try:
-            # streaming enabled
+            # Send to Ollama
             response = requests.post(
                 OLLAMA_API_URL,
                 json={
@@ -53,26 +49,45 @@ if user_input:
                     "stream": True
                 },
                 stream=True,
-                timeout=60
+                timeout=120
             )
 
+            # Process stream
             for line in response.iter_lines():
-                if line:
+                if not line:
+                    continue
+                try:
                     data = json.loads(line)
-                    token = data.get("message", {}).get("content", "")
-                    full_response += token
-                    placeholder.markdown(full_response + "▌")
+                except json.JSONDecodeError:
+                    continue
+
+                # Ollama may send 'message', 'data', or partial text
+                if "message" in data and "content" in data["message"]:
+                    token = data["message"]["content"]
+                elif "data" in data:
+                    token = data["data"]
+                elif "content" in data:
+                    token = data["content"]
+                else:
+                    token = ""
+
+                full_response += token
+                placeholder.markdown(full_response + "▌")
+
+                # Stop when done
+                if data.get("done"):
+                    break
+
             placeholder.markdown(full_response)
 
         except Exception as e:
             st.error(f"❌ Error connecting to Ollama: {e}")
-            full_response = "Error: could not connect to Ollama."
+            full_response = f"Error: could not connect to Ollama ({e})"
 
-    # Save assistant response
     st.session_state["messages"].append({"role": "assistant", "content": full_response})
 
 # -------------------------------
-# Clear chat button
+# Clear chat
 # -------------------------------
 if st.button("Clear chat"):
     st.session_state["messages"] = []
