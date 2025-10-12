@@ -1,59 +1,145 @@
 import streamlit as st
+import requests
+import json
+import time
 import pandas as pd
-import openai
-import io
+from io import StringIO
 from PyPDF2 import PdfReader
 from docx import Document
 
-st.title("AI Tools – Smart File Analyzer")
+# ==========================
+# PAGE SETUP
+# ==========================
+st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="wide")
+st.title("🤖 EconLab — AI Assistant")
+st.write("Ask anything about economics, econometrics, or data analysis — or upload a file for AI-powered insights.")
 
-st.write("Upload a PDF, CSV, or Word file and let the AI extract insights or summarize it.")
+# ==========================
+# API CONFIGURATION (POE)
+# ==========================
+POE_API_URL = "https://api.poe.com/v1/chat/completions"
+POE_API_KEY = st.secrets.get("POE_API_KEY", "YOUR_POE_API_KEY_HERE")
 
-# === File upload ===
-uploaded_file = st.file_uploader("Upload your file", type=["pdf", "csv", "docx"])
+MODEL = st.selectbox("Select model", ["maztouriabot", "gpt-4o-mini", "claude-3-haiku"])
+
+# ==========================
+# FILE UPLOAD & ANALYSIS
+# ==========================
+st.markdown("### 📂 Upload a file for AI analysis")
+uploaded_file = st.file_uploader("Upload PDF, CSV, or Word file", type=["pdf", "csv", "docx"])
+
+uploaded_text = ""
 
 if uploaded_file:
     file_type = uploaded_file.name.split('.')[-1].lower()
 
+    # PDF
     if file_type == "pdf":
         reader = PdfReader(uploaded_file)
-        text = ""
         for page in reader.pages:
-            text += page.extract_text()
-        st.success("✅ PDF loaded successfully.")
-    
+            uploaded_text += page.extract_text() or ""
+        st.success("✅ PDF text extracted successfully.")
+
+    # CSV
     elif file_type == "csv":
         df = pd.read_csv(uploaded_file)
-        st.success("✅ CSV loaded successfully.")
         st.dataframe(df.head())
-        text = df.to_string(index=False)
-    
+        uploaded_text = df.to_string(index=False)
+        st.success("✅ CSV data extracted successfully.")
+
+    # DOCX
     elif file_type == "docx":
         doc = Document(uploaded_file)
-        text = "\n".join([para.text for para in doc.paragraphs])
-        st.success("✅ Word document loaded successfully.")
-    
+        uploaded_text = "\n".join([para.text for para in doc.paragraphs])
+        st.success("✅ Word text extracted successfully.")
+
+    # Show text preview
+    with st.expander("📜 Preview Extracted Text"):
+        st.text(uploaded_text[:2000] + ("..." if len(uploaded_text) > 2000 else ""))
+
+# ==========================
+# CHAT MEMORY
+# ==========================
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
+
+# Display chat history
+for msg in st.session_state["messages"]:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# ==========================
+# USER INPUT
+# ==========================
+default_prompt = "Summarize the uploaded document." if uploaded_text else ""
+user_input = st.chat_input("Type your question or ask about your uploaded file...") or default_prompt
+
+if user_input:
+    st.session_state["messages"].append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    with st.chat_message("assistant"):
+        placeholder = st.empty()
+        full_response = ""
+
+        try:
+            headers = {
+                "Authorization": f"Bearer {POE_API_KEY}",
+                "Content-Type": "application/json"
+            }
+
+            # Combine file content (if any) with user query
+            content = f"File content:\n{uploaded_text[:4000]}\n\nQuestion: {user_input}" if uploaded_text else user_input
+
+            payload = {
+                "model": MODEL,
+                "messages": [{"role": "user", "content": content}]
+            }
+
+            res = requests.post(POE_API_URL, headers=headers, json=payload, timeout=60)
+            res.raise_for_status()
+            data = res.json()
+            response_text = data["choices"][0]["message"]["content"]
+
+            # Typing animation
+            for token in response_text.split():
+                full_response += token + " "
+                placeholder.markdown(full_response + "▌")
+                time.sleep(0.03)
+            placeholder.markdown(full_response)
+
+        except Exception as e:
+            st.error(f"❌ Error fetching response: {e}")
+            full_response = f"Error: {e}"
+
+    st.session_state["messages"].append({"role": "assistant", "content": full_response})
+
+# ==========================
+# EXPORT CHAT
+# ==========================
+st.markdown("---")
+col1, col2, col3 = st.columns([1, 1, 2])
+
+if col1.button("🧹 Clear Chat"):
+    st.session_state["messages"] = []
+    st.toast("Chat cleared!")
+
+if col2.button("💾 Export Chat"):
+    if st.session_state["messages"]:
+        chat_data = pd.DataFrame(st.session_state["messages"])
+        csv = chat_data.to_csv(index=False)
+        st.download_button(
+            label="Download Chat CSV",
+            data=csv,
+            file_name="econlab_chat.csv",
+            mime="text/csv"
+        )
     else:
-        st.error("Unsupported file type.")
-        text = ""
+        st.warning("No chat to export!")
 
-    # === AI Analysis ===
-    if text:
-        st.subheader("🔍 AI Analysis")
-        question = st.text_area("Ask the AI a question about your file:", "Summarize the content.")
-
-        if st.button("Analyze with AI"):
-            with st.spinner("AI is analyzing..."):
-                try:
-                    response = openai.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": "You are an AI assistant that analyzes files and provides insights."},
-                            {"role": "user", "content": f"File content:\n{text[:5000]}\n\nQuestion: {question}"}
-                        ]
-                    )
-                    answer = response.choices[0].message.content
-                    st.markdown("### 💡 AI Result")
-                    st.write(answer)
-                except Exception as e:
-                    st.error(f"Error: {e}")
+# ==========================
+# FOOTER
+# ==========================
+st.markdown("---")
+st.caption("💡 EconLab AI Assistant — Powered by Poe API and Streamlit.")
