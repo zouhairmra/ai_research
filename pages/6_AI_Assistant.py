@@ -4,8 +4,14 @@ import json
 import time
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
+try:
+    import matplotlib
+    matplotlib.use("Agg")  # Use non-GUI backend for server
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
+    st.warning("⚠️ Matplotlib is not installed. Plots will be disabled.")
 
 # Optional imports for file processing
 try:
