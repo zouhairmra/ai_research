@@ -4,15 +4,20 @@ import json
 import time
 import pandas as pd
 import numpy as np
-import seaborn as sns
+# Safe import of matplotlib and seaborn
 try:
     import matplotlib
-    matplotlib.use("Agg")  # Use non-GUI backend for server
+    matplotlib.use("Agg")  # Safe backend for Streamlit Cloud
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
-    st.warning("⚠️ Matplotlib is not installed. Plots will be disabled.")
+    st.warning("⚠️ Matplotlib not installed. Plots will be disabled.")
 
+try:
+    import seaborn as sns
+except ImportError:
+    sns = None
+    st.warning("⚠️ Seaborn not installed. Advanced plots will be disabled.")
 # Optional imports for file processing
 try:
     from PyPDF2 import PdfReader
