@@ -42,7 +42,7 @@ except ImportError:
 # ==========================
 st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="wide")
 st.title("🤖 EconLab — AI Assistant")
-st.write("Ask anything about economics, econometrics, or data analysis — or upload a file for AI insights.")
+st.write("Ask anything about economics, econometrics, or data analysis — or upload a file for AI-powered insights.")
 
 # ==========================
 # POE API CONFIG
@@ -86,22 +86,24 @@ if uploaded_file:
         st.text(uploaded_text[:2000] + ("..." if len(uploaded_text) > 2000 else ""))
 
 # ==========================
-# DATA ANALYSIS BUTTONS
+# AUTOMATIC DATA INSIGHTS
 # ==========================
 if df is not None:
-    st.markdown("### 📊 Data Analysis Tools")
+    st.markdown("### 📊 Suggested Data Insights")
+    numeric_cols = df.select_dtypes(include="number").columns.tolist()
+    
+    if numeric_cols:
+        st.markdown(f"Detected numeric columns: {', '.join(numeric_cols)}")
 
-    if plt and st.button("Plot Pairplot (Seaborn)"):
-        if sns:
-            st.write("Generating pairplot...")
-            fig = sns.pairplot(df.select_dtypes(include="number"))
+        # Auto pairplot
+        if sns and plt:
+            st.write("Generating auto pairplot...")
+            fig = sns.pairplot(df[numeric_cols])
             st.pyplot(fig)
-        else:
-            st.warning("⚠️ seaborn not installed. Cannot generate pairplot.")
 
-    if sm and st.button("Run OLS Regression (Statsmodels)"):
-        numeric_cols = df.select_dtypes(include="number").columns
-        if len(numeric_cols) >= 2:
+        # Auto regression suggestion
+        if sm and len(numeric_cols) >= 2:
+            st.write("You can run regression analysis on numeric columns.")
             y_col = st.selectbox("Select dependent variable", numeric_cols)
             X_cols = st.multiselect("Select independent variables", [c for c in numeric_cols if c != y_col])
             if X_cols:
@@ -109,8 +111,6 @@ if df is not None:
                 y = df[y_col]
                 model = sm.OLS(y, X).fit()
                 st.write(model.summary())
-        else:
-            st.warning("Not enough numeric columns for regression.")
 
 # ==========================
 # CHAT MEMORY
@@ -133,48 +133,4 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    with st.chat_message("assistant"):
-        placeholder = st.empty()
-        full_response = ""
-
-        try:
-            headers = {"Authorization": f"Bearer {POE_API_KEY}", "Content-Type": "application/json"}
-            content = f"File content:\n{uploaded_text[:4000]}\n\nQuestion: {user_input}" if uploaded_text else user_input
-            payload = {"model": MODEL, "messages": [{"role": "user", "content": content}]}
-
-            res = requests.post(POE_API_URL, headers=headers, json=payload, timeout=60)
-            res.raise_for_status()
-            data = res.json()
-            response_text = data["choices"][0]["message"]["content"]
-
-            for token in response_text.split():
-                full_response += token + " "
-                placeholder.markdown(full_response + "▌")
-                time.sleep(0.03)
-            placeholder.markdown(full_response)
-
-        except Exception as e:
-            st.error(f"❌ Error fetching response: {e}")
-            full_response = f"Error: {e}"
-
-    st.session_state["messages"].append({"role": "assistant", "content": full_response})
-
-# ==========================
-# EXPORT CHAT
-# ==========================
-st.markdown("---")
-col1, col2, col3 = st.columns([1, 1, 2])
-
-if col1.button("🧹 Clear Chat"):
-    st.session_state["messages"] = []
-    st.toast("Chat cleared!")
-
-if col2.button("💾 Export Chat"):
-    if st.session_state["messages"]:
-        chat_data = pd.DataFrame(st.session_state["messages"])
-        st.download_button("Download CSV", chat_data.to_csv(index=False), "econlab_chat.csv", "text/csv")
-    else:
-        st.warning("No chat to export!")
-
-st.markdown("---")
-st.caption("💡 EconLab AI Assistant — Powered by Poe API and Streamlit.")
+    with st.chat_message("_
