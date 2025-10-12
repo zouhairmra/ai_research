@@ -4,6 +4,17 @@ import json
 import time
 import pandas as pd
 from io import StringIO
+try:
+    from PyPDF2 import PdfReader
+except ImportError:
+    PdfReader = None
+    st.warning("⚠️ PyPDF2 not found. PDF upload will be disabled.")
+
+try:
+    from docx import Document
+except ImportError:
+    Document = None
+    st.warning("⚠️ python-docx not found. Word file upload will be disabled.")
 
 
 # ==========================
