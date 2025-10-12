@@ -4,18 +4,8 @@ import json
 import time
 import pandas as pd
 from io import StringIO
-try:
-    from PyPDF2 import PdfReader
-except ImportError:
-    PdfReader = None
-    st.warning("⚠️ PyPDF2 not found. PDF upload will be disabled.")
-
-try:
-    from docx import Document
-except ImportError:
-    Document = None
-    st.warning("⚠️ python-docx not found. Word file upload will be disabled.")
-
+from PyPDF2 import PdfReader
+from docx import Document
 
 # ==========================
 # PAGE SETUP
@@ -44,7 +34,12 @@ if uploaded_file:
     file_type = uploaded_file.name.split('.')[-1].lower()
 
     # PDF
-    
+    if file_type == "pdf":
+        reader = PdfReader(uploaded_file)
+        for page in reader.pages:
+            uploaded_text += page.extract_text() or ""
+        st.success("✅ PDF text extracted successfully.")
+
     # CSV
     elif file_type == "csv":
         df = pd.read_csv(uploaded_file)
