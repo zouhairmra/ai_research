@@ -4,7 +4,7 @@ import json
 import time
 import pandas as pd
 from io import StringIO
-from docx import Document
+
 
 # ==========================
 # PAGE SETUP
