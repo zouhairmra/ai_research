@@ -44,12 +44,18 @@ if uploaded_file:
     file_type = uploaded_file.name.split('.')[-1].lower()
 
     # PDF
-    if file_type == "pdf":
-        reader = PdfReader(uploaded_file)
-        for page in reader.pages:
-            uploaded_text += page.extract_text() or ""
-        st.success("✅ PDF text extracted successfully.")
-
+    if uploaded_file is not None:
+    if uploaded_file.type == "application/pdf" and PdfReader is not None:
+        try:
+            # Ensure PdfReader can handle BytesIO
+            reader = PdfReader(uploaded_file)
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text() or ""
+            st.session_state["uploaded_text"] = text
+            st.success("✅ PDF loaded successfully!")
+        except Exception as e:
+            st.error(f"❌ Failed to read PDF: {e}")
     # CSV
     elif file_type == "csv":
         df = pd.read_csv(uploaded_file)
