@@ -65,12 +65,8 @@ if uploaded_file:
     # PDF
     if file_ext == "pdf" and PdfReader:
         reader = PdfReader(uploaded_file)
-       for page in reader.pages:
-    text = page.extract_text()
-    if text:
-        uploaded_text += text
-    else:
-        st.warning("⚠️ Some pages contain no extractable text (may be scanned images).")
+      for page in reader.pages:
+    uploaded_text += page.extract_text() or ""
         st.success("✅ PDF text extracted.")
     
     # Word
