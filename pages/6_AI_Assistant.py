@@ -177,4 +177,4 @@ if col2.button("💾 Export Chat"):
         st.warning("No chat to export!")
 
 st.markdown("---")
-st.caption("💡 EconLab AI Assistant — Powered by Poe API and Streamlit.")_
+st.caption("💡 EconLab AI Assistant — Powered by Poe API and Streamlit.")
