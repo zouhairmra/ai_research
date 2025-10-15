@@ -9,3 +9,4 @@ scikit-learn==1.3.2
 reportlab==4.0.4
 PyPDF2
 python-docx
+statsmodels==0.14.1
