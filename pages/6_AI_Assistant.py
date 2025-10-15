@@ -66,7 +66,11 @@ if uploaded_file:
     if file_ext == "pdf" and PdfReader:
         reader = PdfReader(uploaded_file)
         for page in reader.pages:
-            uploaded_text += page.extract_text() or ""
+    text = page.extract_text()
+    if text:
+        uploaded_text += text
+    else:
+        st.warning("⚠️ Some pages contain no extractable text (may be scanned images).")
         st.success("✅ PDF text extracted.")
     
     # Word
@@ -139,7 +143,7 @@ if user_input:
 
         try:
             headers = {"Authorization": f"Bearer {POE_API_KEY}", "Content-Type": "application/json"}
-            content = f"File content:\n{uploaded_text[:4000]}\n\nQuestion: {user_input}" if uploaded_text else user_input
+            content = f"File content:\n{uploaded_text[:8000]}\n\nQuestion: {user_input}" if uploaded_text else user_input
             payload = {"model": MODEL, "messages": [{"role": "user", "content": content}]}
 
             res = requests.post(POE_API_URL, headers=headers, json=payload, timeout=60)
