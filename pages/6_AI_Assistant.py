@@ -65,8 +65,8 @@ if uploaded_file:
     # PDF
     if file_ext == "pdf" and PdfReader:
         reader = PdfReader(uploaded_file)
-for page in reader.pages:
-    uploaded_text += page.extract_text() or ""
+        for page in reader.pages:
+            uploaded_text += page.extract_text() or ""
         st.success("✅ PDF text extracted.")
     
     # Word
