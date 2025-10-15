@@ -143,7 +143,7 @@ if user_input:
 
         try:
             headers = {"Authorization": f"Bearer {POE_API_KEY}", "Content-Type": "application/json"}
-            content = f"File content:\n{uploaded_text[:8000]}\n\nQuestion: {user_input}" if uploaded_text else user_input
+            content = f"File content:\n{uploaded_text[:4000]}\n\nQuestion: {user_input}" if uploaded_text else user_input
             payload = {"model": MODEL, "messages": [{"role": "user", "content": content}]}
 
             res = requests.post(POE_API_URL, headers=headers, json=payload, timeout=60)
