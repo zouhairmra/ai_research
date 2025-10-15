@@ -1,4 +1,4 @@
-le fichier pdf na pas ete lu par le AI bot(import streamlit as st
+import streamlit as st
 import requests
 import json
 import time
