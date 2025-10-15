@@ -1,4 +1,4 @@
-import streamlit as st
+le fichier pdf na pas ete lu par le AI bot(import streamlit as st
 import requests
 import json
 import time
@@ -65,8 +65,8 @@ if uploaded_file:
     # PDF
     if file_ext == "pdf" and PdfReader:
         reader = PdfReader(uploaded_file)
-      for page in reader.pages:
-    uploaded_text += page.extract_text() or ""
+        for page in reader.pages:
+            uploaded_text += page.extract_text() or ""
         st.success("✅ PDF text extracted.")
     
     # Word
@@ -177,4 +177,4 @@ if col2.button("💾 Export Chat"):
         st.warning("No chat to export!")
 
 st.markdown("---")
-st.caption("💡 EconLab AI Assistant — Powered by Poe API and Streamlit.")
+st.caption("💡 EconLab AI Assistant — Powered by Poe API and Streamlit.")_
